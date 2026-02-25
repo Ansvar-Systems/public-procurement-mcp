@@ -15,7 +15,12 @@ export function getProvision(
   db: DatabaseAdapter,
   params: GetProvisionParams
 ) {
-  const { directive_id, article } = params;
+  const { directive_id } = params;
+  // Normalize article: strip "Article ", "Art. ", "§ " prefixes
+  const article = params.article
+    ?.replace(/^(?:Article|Art\.?)\s*/i, '')
+    .replace(/^§\s*/, '')
+    .trim() || undefined;
 
   if (!directive_id || directive_id.trim().length === 0) {
     return {

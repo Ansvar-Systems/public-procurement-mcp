@@ -22,9 +22,8 @@ async function main() {
   const dbPath = getDefaultDbPath();
   const db = await createAdapter(dbPath, { readonly: true });
   console.error(`Database loaded: ${dbPath}`);
-  const mcpServer = createMcpServer(db);
 
-  // Map to store transports by session ID
+  // Map to store transports by session ID (each with its own Server instance)
   const transports = new Map<string, StreamableHTTPServerTransport>();
 
   const httpServer = createServer(async (req, res) => {
@@ -57,6 +56,8 @@ async function main() {
           sessionIdGenerator: () => randomUUID(),
         });
 
+        // Create a fresh MCP server per session (SDK requires 1:1 server:transport)
+        const mcpServer = createMcpServer(db);
         await mcpServer.connect(transport);
 
         transport.onclose = () => {

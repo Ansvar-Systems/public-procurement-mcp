@@ -333,19 +333,19 @@ function dispatchTool(
       return searchLegislation(db, {
         query: a.query as string,
         jurisdiction: a.jurisdiction as string | undefined,
-        directive: a.directive as string | undefined,
+        directive: (a.directive ?? a.regulation) as string | undefined,
         limit: a.limit as number | undefined,
       });
 
     case 'get_provision':
       return getProvision(db, {
-        directive_id: a.directive_id as string,
+        directive_id: (a.directive_id ?? a.regulation) as string,
         article: a.article as string | undefined,
       });
 
     case 'get_directive_overview':
       return getDirectiveOverview(db, {
-        directive_id: a.directive_id as string,
+        directive_id: (a.directive_id ?? a.regulation) as string,
       });
 
     case 'get_cpv_codes':
