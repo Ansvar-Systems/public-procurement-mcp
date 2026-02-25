@@ -1,0 +1,30 @@
+{
+  "server": "@ansvar/public-procurement-mcp",
+  "version": "0.1.0",
+  "generated": "2026-02-25",
+  "legal_content": {
+    "eu_directives": 5,
+    "national_laws": 9,
+    "total_provisions": "~2200",
+    "jurisdictions": ["EU", "CH", "AT", "DE"]
+  },
+  "reference_data": {
+    "cpv_codes": 9454,
+    "nuts_regions": 1500,
+    "thresholds": 21,
+    "procedure_types": 21,
+    "exclusion_grounds": 33
+  },
+  "award_intelligence": {
+    "notice_source": "TED eSender API",
+    "update_frequency": "daily",
+    "backfill_target": "2021-present"
+  },
+  "tools": 19,
+  "not_covered": [
+    "Sub-threshold national procurement",
+    "Municipal/regional procurement portals",
+    "Case law and tribunal decisions",
+    "Soft law and guidelines"
+  ]
+}
