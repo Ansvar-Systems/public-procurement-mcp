@@ -232,6 +232,229 @@ export async function createTestDb(): Promise<DatabaseAdapter> {
     (3, 'CH', 'discretionary', 'Insolvenz (Insolvency)', 'Art. 26(1)(b) BoeB', 'The tenderer is subject to insolvency or debt restructuring proceedings.');
   `);
 
+  // ── Seed data: Notices (100 sample award notices) ─────────────────────
+  // Schema: notices(id, ted_id, notice_type, publication_date, buyer_id, buyer_name, buyer_nuts,
+  //   cpv_main, cpv_additional, title, description, procedure_type, value_estimated, value_awarded,
+  //   currency, winner_name, winner_country, num_tenders_received, award_criteria_type,
+  //   contract_duration_months, framework_agreement, original_language, deadline, created_at)
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ted_id TEXT UNIQUE NOT NULL,
+      notice_type TEXT NOT NULL,
+      publication_date TEXT NOT NULL,
+      buyer_id TEXT,
+      buyer_name TEXT,
+      buyer_nuts TEXT,
+      cpv_main TEXT,
+      cpv_additional TEXT,
+      title TEXT,
+      description TEXT,
+      procedure_type TEXT,
+      value_estimated REAL,
+      value_awarded REAL,
+      currency TEXT DEFAULT 'EUR',
+      winner_name TEXT,
+      winner_country TEXT,
+      num_tenders_received INTEGER,
+      award_criteria_type TEXT,
+      contract_duration_months INTEGER,
+      framework_agreement INTEGER DEFAULT 0,
+      original_language TEXT,
+      deadline TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_notices_cpv ON notices(cpv_main);
+    CREATE INDEX IF NOT EXISTS idx_notices_buyer ON notices(buyer_id);
+    CREATE INDEX IF NOT EXISTS idx_notices_winner ON notices(winner_name);
+    CREATE INDEX IF NOT EXISTS idx_notices_date ON notices(publication_date);
+    CREATE INDEX IF NOT EXISTS idx_notices_type ON notices(notice_type);
+    CREATE INDEX IF NOT EXISTS idx_notices_nuts ON notices(buyer_nuts);
+
+    CREATE TABLE IF NOT EXISTS buyer_profiles (
+      buyer_id TEXT PRIMARY KEY,
+      buyer_name TEXT,
+      buyer_nuts TEXT,
+      total_awards INTEGER,
+      avg_value_eur REAL,
+      median_value_eur REAL,
+      preferred_procedure TEXT,
+      preferred_criteria TEXT,
+      avg_bidders REAL,
+      first_seen TEXT,
+      last_seen TEXT,
+      top_cpv_codes TEXT,
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS cpv_benchmarks (
+      cpv_main TEXT,
+      nuts_country TEXT,
+      year INTEGER,
+      award_count INTEGER,
+      p25_value REAL,
+      median_value REAL,
+      p75_value REAL,
+      avg_bidders REAL,
+      top_winners TEXT,
+      PRIMARY KEY (cpv_main, nuts_country, year)
+    );
+  `);
+
+  // Insert 100 sample award notices with realistic data
+  db.exec(`
+    INSERT INTO notices (ted_id, notice_type, publication_date, buyer_id, buyer_name, buyer_nuts, cpv_main, cpv_additional, title, description, procedure_type, value_estimated, value_awarded, currency, winner_name, winner_country, num_tenders_received, award_criteria_type, contract_duration_months, framework_agreement, original_language, deadline) VALUES
+    -- German buyers, IT services (72 prefix)
+    ('2024/S 001-000001', 'contract_award', '2024-01-15', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72200000', '72210000', 'IT Security Consulting', 'Cybersecurity advisory services', 'Open procedure', 500000, 480000, 'EUR', 'SecurIT GmbH', 'DE', 5, 'best_value', 24, 0, 'de', '2024-01-05'),
+    ('2024/S 001-000002', 'contract_award', '2024-02-20', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72230000', NULL, 'Custom Software Development', 'Development of security platform', 'Restricted procedure', 2000000, 1850000, 'EUR', 'Siemens AG', 'DE', 8, 'best_value', 36, 0, 'de', '2024-02-10'),
+    ('2024/S 001-000003', 'contract_award', '2024-03-10', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72220000', NULL, 'Systems Consultancy', 'Technical architecture consultancy', 'Open procedure', 300000, 275000, 'EUR', 'Capgemini Deutschland', 'DE', 4, 'best_value', 12, 0, 'de', '2024-02-28'),
+    ('2024/S 001-000004', 'contract_award', '2024-04-05', 'BUY-DE-002', 'Stadt Muenchen', 'DE212', '72200000', NULL, 'IT Consulting Services', 'Digital transformation consulting', 'Open procedure', 750000, 720000, 'EUR', 'Accenture GmbH', 'DE', 6, 'best_value', 24, 0, 'de', '2024-03-25'),
+    ('2024/S 001-000005', 'contract_award', '2024-04-15', 'BUY-DE-002', 'Stadt Muenchen', 'DE212', '48000000', '48200000', 'Enterprise Software Licenses', 'Office and collaboration software', 'Open procedure', 1200000, 1100000, 'EUR', 'Microsoft Deutschland', 'DE', 3, 'lowest_price', 48, 1, 'de', '2024-04-01'),
+    ('2024/S 001-000006', 'contract_award', '2024-05-20', 'BUY-DE-002', 'Stadt Muenchen', 'DE212', '72250000', NULL, 'System Support Services', 'Ongoing IT support and maintenance', 'Open procedure', 400000, 380000, 'EUR', 'SecurIT GmbH', 'DE', 7, 'best_value', 36, 1, 'de', '2024-05-10'),
+    ('2024/S 001-000007', 'contract_award', '2024-06-01', 'BUY-DE-003', 'Deutsche Bahn AG', 'DE300', '72200000', NULL, 'Railway IT Modernization', 'Modernization of ticketing systems', 'Restricted procedure', 5000000, 4800000, 'EUR', 'SAP SE', 'DE', 4, 'best_value', 48, 0, 'de', '2024-05-20'),
+    ('2024/S 001-000008', 'contract_award', '2024-06-15', 'BUY-DE-003', 'Deutsche Bahn AG', 'DE300', '72230000', NULL, 'Mobile App Development', 'Passenger mobile application', 'Competitive dialogue', 3000000, 2900000, 'EUR', 'Capgemini Deutschland', 'DE', 6, 'best_value', 24, 0, 'de', '2024-06-01'),
+    ('2024/S 001-000009', 'contract_award', '2024-07-10', 'BUY-DE-003', 'Deutsche Bahn AG', 'DE300', '72800000', NULL, 'IT Security Audit', 'Penetration testing and security audit', 'Open procedure', 200000, 185000, 'EUR', 'SecurIT GmbH', 'DE', 9, 'best_value', 6, 0, 'de', '2024-06-30'),
+    ('2024/S 001-000010', 'contract_award', '2024-07-25', 'BUY-DE-004', 'Universitaet Heidelberg', 'DE125', '72200000', NULL, 'Research Computing Services', 'HPC cluster management', 'Open procedure', 600000, 550000, 'EUR', 'Atos SE', 'DE', 3, 'best_value', 36, 0, 'de', '2024-07-15'),
+
+    -- Austrian buyers, mixed CPV
+    ('2024/S 002-000001', 'contract_award', '2024-01-20', 'BUY-AT-001', 'Bundesrechenzentrum GmbH', 'AT130', '72200000', NULL, 'Cloud Infrastructure Services', 'Government cloud hosting', 'Open procedure', 800000, 750000, 'EUR', 'A1 Telekom Austria', 'AT', 4, 'best_value', 48, 1, 'de', '2024-01-10'),
+    ('2024/S 002-000002', 'contract_award', '2024-02-15', 'BUY-AT-001', 'Bundesrechenzentrum GmbH', 'AT130', '72230000', NULL, 'E-Government Portal Development', 'Citizen service portal development', 'Restricted procedure', 1500000, 1400000, 'EUR', 'Siemens AG', 'AT', 5, 'best_value', 24, 0, 'de', '2024-02-05'),
+    ('2024/S 002-000003', 'contract_award', '2024-03-25', 'BUY-AT-001', 'Bundesrechenzentrum GmbH', 'AT130', '48600000', NULL, 'Database Software Licenses', 'Enterprise database platform', 'Open procedure', 500000, 480000, 'EUR', 'Oracle Austria', 'AT', 2, 'lowest_price', 36, 0, 'de', '2024-03-15'),
+    ('2024/S 002-000004', 'contract_award', '2024-04-10', 'BUY-AT-002', 'Stadt Wien', 'AT130', '72200000', NULL, 'Smart City Consulting', 'Smart city strategy consulting', 'Open procedure', 350000, 320000, 'EUR', 'Accenture GmbH', 'AT', 6, 'best_value', 18, 0, 'de', '2024-03-30'),
+    ('2024/S 002-000005', 'contract_award', '2024-05-05', 'BUY-AT-002', 'Stadt Wien', 'AT130', '72250000', NULL, 'IT Support Framework', 'Multi-vendor IT support agreement', 'Open procedure', 900000, 850000, 'EUR', 'Kapsch BusinessCom', 'AT', 8, 'best_value', 48, 1, 'de', '2024-04-25'),
+    ('2024/S 002-000006', 'contract_award', '2024-06-20', 'BUY-AT-002', 'Stadt Wien', 'AT130', '72800000', NULL, 'Cybersecurity Assessment', 'Security audit and compliance check', 'Open procedure', 150000, 140000, 'EUR', 'SecurIT GmbH', 'AT', 5, 'best_value', 6, 0, 'de', '2024-06-10'),
+    ('2024/S 002-000007', 'contract_award', '2024-07-15', 'BUY-AT-003', 'Oesterreichische Bundesbahnen', 'AT130', '72200000', NULL, 'Railway Ticketing Platform', 'Online ticketing system', 'Restricted procedure', 2500000, 2300000, 'EUR', 'Siemens AG', 'AT', 4, 'best_value', 36, 0, 'de', '2024-07-05'),
+    ('2024/S 002-000008', 'contract_award', '2024-08-01', 'BUY-AT-003', 'Oesterreichische Bundesbahnen', 'AT130', '72230000', NULL, 'Mobile Ticketing App', 'Mobile application development', 'Open procedure', 800000, 760000, 'EUR', 'Kapsch BusinessCom', 'AT', 5, 'best_value', 18, 0, 'de', '2024-07-22'),
+
+    -- Swiss buyers
+    ('2024/S 003-000001', 'contract_award', '2024-01-25', 'BUY-CH-001', 'Bundesamt fuer Informatik und Telekommunikation', 'CH011', '72200000', NULL, 'IT Strategy Consulting', 'Federal IT strategy development', 'Open procedure', 400000, 380000, 'CHF', 'Deloitte AG', 'CH', 4, 'best_value', 12, 0, 'de', '2024-01-15'),
+    ('2024/S 003-000002', 'contract_award', '2024-03-15', 'BUY-CH-001', 'Bundesamt fuer Informatik und Telekommunikation', 'CH011', '72230000', NULL, 'Government Platform Development', 'Citizen services platform', 'Selective procedure', 3000000, 2800000, 'CHF', 'Swisscom IT Services', 'CH', 6, 'best_value', 36, 0, 'de', '2024-03-05'),
+    ('2024/S 003-000003', 'contract_award', '2024-05-10', 'BUY-CH-001', 'Bundesamt fuer Informatik und Telekommunikation', 'CH011', '72800000', NULL, 'IT Security Testing', 'Penetration testing services', 'Open procedure', 200000, 190000, 'CHF', 'SecurIT GmbH', 'CH', 7, 'best_value', 12, 0, 'de', '2024-04-30'),
+    ('2024/S 003-000004', 'contract_award', '2024-06-25', 'BUY-CH-002', 'ETH Zurich', 'CH040', '72200000', NULL, 'Research Computing Infrastructure', 'HPC infrastructure management', 'Open procedure', 1000000, 950000, 'CHF', 'Atos SE', 'CH', 3, 'best_value', 48, 0, 'de', '2024-06-15'),
+    ('2024/S 003-000005', 'contract_award', '2024-07-20', 'BUY-CH-002', 'ETH Zurich', 'CH040', '48600000', NULL, 'Scientific Database Platform', 'Research data management system', 'Open procedure', 500000, 470000, 'CHF', 'Oracle Austria', 'CH', 2, 'lowest_price', 24, 0, 'de', '2024-07-10'),
+
+    -- EU institution buyers
+    ('2024/S 004-000001', 'contract_award', '2024-02-01', 'BUY-EU-001', 'European Commission - DG DIGIT', 'BE100', '72200000', NULL, 'IT Service Management', 'ITSM framework implementation', 'Open procedure', 2000000, 1900000, 'EUR', 'Capgemini Deutschland', 'BE', 7, 'best_value', 48, 1, 'en', '2024-01-20'),
+    ('2024/S 004-000002', 'contract_award', '2024-03-20', 'BUY-EU-001', 'European Commission - DG DIGIT', 'BE100', '72230000', NULL, 'EU Portal Development', 'Citizens portal development', 'Restricted procedure', 4000000, 3800000, 'EUR', 'Accenture GmbH', 'BE', 5, 'best_value', 36, 0, 'en', '2024-03-10'),
+    ('2024/S 004-000003', 'contract_award', '2024-05-15', 'BUY-EU-001', 'European Commission - DG DIGIT', 'BE100', '72800000', NULL, 'Cybersecurity Services', 'CERT and SOC services', 'Restricted procedure', 3000000, 2850000, 'EUR', 'SecurIT GmbH', 'BE', 4, 'best_value', 36, 0, 'en', '2024-05-05'),
+    ('2024/S 004-000004', 'contract_award', '2024-06-10', 'BUY-EU-002', 'European Parliament', 'BE100', '72200000', NULL, 'Digital Workplace Services', 'Collaboration tools and support', 'Open procedure', 1500000, 1400000, 'EUR', 'Atos SE', 'BE', 6, 'best_value', 48, 1, 'en', '2024-05-30'),
+    ('2024/S 004-000005', 'contract_award', '2024-07-05', 'BUY-EU-002', 'European Parliament', 'BE100', '48000000', NULL, 'Document Management System', 'Enterprise DMS implementation', 'Open procedure', 800000, 750000, 'EUR', 'SAP SE', 'BE', 4, 'lowest_price', 24, 0, 'en', '2024-06-25'),
+
+    -- Construction and works contracts
+    ('2024/S 005-000001', 'contract_award', '2024-01-30', 'BUY-DE-002', 'Stadt Muenchen', 'DE212', '45210000', NULL, 'School Construction', 'New school building construction', 'Open procedure', 8000000, 7500000, 'EUR', 'HOCHTIEF AG', 'DE', 5, 'best_value', 24, 0, 'de', '2024-01-20'),
+    ('2024/S 005-000002', 'contract_award', '2024-03-05', 'BUY-DE-002', 'Stadt Muenchen', 'DE212', '45300000', NULL, 'Building Installation Works', 'Electrical and HVAC installation', 'Open procedure', 3000000, 2800000, 'EUR', 'Imtech Deutschland', 'DE', 7, 'lowest_price', 18, 0, 'de', '2024-02-23'),
+    ('2024/S 005-000003', 'contract_award', '2024-04-20', 'BUY-AT-002', 'Stadt Wien', 'AT130', '45210000', NULL, 'Hospital Extension', 'Hospital wing construction', 'Restricted procedure', 15000000, 14200000, 'EUR', 'STRABAG SE', 'AT', 4, 'best_value', 36, 0, 'de', '2024-04-10'),
+    ('2024/S 005-000004', 'contract_award', '2024-06-05', 'BUY-AT-002', 'Stadt Wien', 'AT130', '45200000', NULL, 'Bridge Rehabilitation', 'Danube bridge structural repair', 'Open procedure', 6000000, 5700000, 'EUR', 'PORR AG', 'AT', 3, 'lowest_price', 18, 0, 'de', '2024-05-25'),
+
+    -- Legal/consulting services
+    ('2024/S 006-000001', 'contract_award', '2024-02-10', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '79100000', NULL, 'Legal Advisory Services', 'Data protection legal advisory', 'Open procedure', 300000, 280000, 'EUR', 'CMS Hasche Sigle', 'DE', 4, 'best_value', 24, 1, 'de', '2024-01-30'),
+    ('2024/S 006-000002', 'contract_award', '2024-04-25', 'BUY-AT-001', 'Bundesrechenzentrum GmbH', 'AT130', '79400000', NULL, 'Management Consulting', 'IT governance consulting', 'Open procedure', 250000, 230000, 'EUR', 'McKinsey Austria', 'AT', 3, 'best_value', 12, 0, 'de', '2024-04-15'),
+
+    -- Notices from 2023 (older data for history/benchmarking)
+    ('2023/S 001-000001', 'contract_award', '2023-02-15', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72200000', NULL, 'IT Consulting 2023', 'Annual IT consulting contract', 'Open procedure', 450000, 420000, 'EUR', 'SecurIT GmbH', 'DE', 6, 'best_value', 12, 0, 'de', '2023-02-05'),
+    ('2023/S 001-000002', 'contract_award', '2023-05-20', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72230000', NULL, 'Software Development 2023', 'Custom development project', 'Restricted procedure', 1800000, 1700000, 'EUR', 'Capgemini Deutschland', 'DE', 5, 'best_value', 24, 0, 'de', '2023-05-10'),
+    ('2023/S 001-000003', 'contract_award', '2023-08-10', 'BUY-DE-002', 'Stadt Muenchen', 'DE212', '72200000', NULL, 'Digital Services 2023', 'Digital transformation project', 'Open procedure', 650000, 620000, 'EUR', 'Accenture GmbH', 'DE', 4, 'best_value', 18, 0, 'de', '2023-07-31'),
+    ('2023/S 001-000004', 'contract_award', '2023-09-05', 'BUY-DE-003', 'Deutsche Bahn AG', 'DE300', '72200000', NULL, 'IT Infrastructure 2023', 'Network infrastructure upgrade', 'Open procedure', 4000000, 3800000, 'EUR', 'Atos SE', 'DE', 5, 'best_value', 36, 0, 'de', '2023-08-25'),
+    ('2023/S 001-000005', 'contract_award', '2023-10-20', 'BUY-AT-001', 'Bundesrechenzentrum GmbH', 'AT130', '72200000', NULL, 'Cloud Services 2023', 'Government cloud migration', 'Open procedure', 700000, 650000, 'EUR', 'A1 Telekom Austria', 'AT', 3, 'best_value', 24, 1, 'de', '2023-10-10'),
+    ('2023/S 001-000006', 'contract_award', '2023-11-15', 'BUY-AT-002', 'Stadt Wien', 'AT130', '72200000', NULL, 'Smart City Phase 2', 'Smart city platform upgrade', 'Open procedure', 400000, 370000, 'EUR', 'Kapsch BusinessCom', 'AT', 5, 'best_value', 12, 0, 'de', '2023-11-05'),
+    ('2023/S 001-000007', 'contract_award', '2023-03-15', 'BUY-CH-001', 'Bundesamt fuer Informatik und Telekommunikation', 'CH011', '72200000', NULL, 'Federal IT Services 2023', 'Annual IT support contract', 'Open procedure', 350000, 330000, 'CHF', 'Swisscom IT Services', 'CH', 4, 'best_value', 12, 0, 'de', '2023-03-05'),
+    ('2023/S 001-000008', 'contract_award', '2023-06-25', 'BUY-EU-001', 'European Commission - DG DIGIT', 'BE100', '72200000', NULL, 'IT Framework Contract 2023', 'IT services framework', 'Open procedure', 1800000, 1700000, 'EUR', 'Capgemini Deutschland', 'BE', 6, 'best_value', 48, 1, 'en', '2023-06-15'),
+
+    -- Framework agreements (additional)
+    ('2024/S 007-000001', 'contract_award', '2024-02-25', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72200000', NULL, 'IT Security Framework Agreement', 'Multi-year security services framework', 'Open procedure', 2000000, 1900000, 'EUR', 'SecurIT GmbH', 'DE', 8, 'best_value', 48, 1, 'de', '2024-02-15'),
+    ('2024/S 007-000002', 'contract_award', '2024-03-30', 'BUY-DE-003', 'Deutsche Bahn AG', 'DE300', '72230000', NULL, 'Software Development Framework', 'Ongoing dev services framework', 'Open procedure', 10000000, 9500000, 'EUR', 'SAP SE', 'DE', 5, 'best_value', 48, 1, 'de', '2024-03-20'),
+    ('2024/S 007-000003', 'contract_award', '2024-05-25', 'BUY-AT-002', 'Stadt Wien', 'AT130', '72200000', NULL, 'IT Services Framework Wien', 'Citywide IT services framework', 'Open procedure', 3000000, 2800000, 'EUR', 'Kapsch BusinessCom', 'AT', 6, 'best_value', 48, 1, 'de', '2024-05-15'),
+    ('2024/S 007-000004', 'contract_award', '2024-06-30', 'BUY-EU-001', 'European Commission - DG DIGIT', 'BE100', '72230000', NULL, 'Software Dev Framework EC', 'Development services framework', 'Restricted procedure', 5000000, 4700000, 'EUR', 'Accenture GmbH', 'BE', 4, 'best_value', 48, 1, 'en', '2024-06-20'),
+
+    -- Contract notices (pending, no winner yet)
+    ('2024/S 008-000001', 'contract_notice', '2024-08-01', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72200000', NULL, 'IT Security Services 2025', 'Next generation security services', 'Open procedure', 600000, NULL, 'EUR', NULL, NULL, NULL, 'best_value', 24, 0, 'de', '2024-09-15'),
+    ('2024/S 008-000002', 'contract_notice', '2024-08-10', 'BUY-AT-001', 'Bundesrechenzentrum GmbH', 'AT130', '72230000', NULL, 'Digital Government 2025', 'Next digital government platform', 'Open procedure', 2000000, NULL, 'EUR', NULL, NULL, NULL, 'best_value', 36, 0, 'de', '2024-09-20'),
+
+    -- More IT services in DE for benchmarking
+    ('2024/S 009-000001', 'contract_award', '2024-01-10', 'BUY-DE-005', 'Landesamt fuer Digitalisierung Bayern', 'DE212', '72200000', NULL, 'Digital Services Bayern', 'State digital transformation', 'Open procedure', 900000, 850000, 'EUR', 'Accenture GmbH', 'DE', 5, 'best_value', 24, 0, 'de', '2023-12-30'),
+    ('2024/S 009-000002', 'contract_award', '2024-02-05', 'BUY-DE-005', 'Landesamt fuer Digitalisierung Bayern', 'DE212', '72220000', NULL, 'Systems Consulting Bayern', 'Technical systems advisory', 'Open procedure', 400000, 370000, 'EUR', 'Capgemini Deutschland', 'DE', 4, 'best_value', 12, 0, 'de', '2024-01-25'),
+    ('2024/S 009-000003', 'contract_award', '2024-03-12', 'BUY-DE-006', 'Polizei Berlin', 'DE300', '72200000', NULL, 'Police IT Modernization', 'Law enforcement IT systems', 'Restricted procedure', 3000000, 2850000, 'EUR', 'Atos SE', 'DE', 3, 'best_value', 36, 0, 'de', '2024-03-02'),
+    ('2024/S 009-000004', 'contract_award', '2024-04-08', 'BUY-DE-006', 'Polizei Berlin', 'DE300', '72800000', NULL, 'Security Testing Services', 'Annual security assessment', 'Open procedure', 150000, 140000, 'EUR', 'SecurIT GmbH', 'DE', 6, 'best_value', 12, 0, 'de', '2024-03-28'),
+    ('2024/S 009-000005', 'contract_award', '2024-05-03', 'BUY-DE-007', 'Charité Universitaetsmedizin', 'DE300', '72200000', NULL, 'Hospital IT Services', 'Healthcare IT management', 'Open procedure', 700000, 660000, 'EUR', 'Siemens AG', 'DE', 4, 'best_value', 24, 0, 'de', '2024-04-22'),
+    ('2024/S 009-000006', 'contract_award', '2024-05-18', 'BUY-DE-007', 'Charité Universitaetsmedizin', 'DE300', '48800000', NULL, 'Information Systems', 'Healthcare information system', 'Restricted procedure', 2000000, 1900000, 'EUR', 'SAP SE', 'DE', 3, 'best_value', 36, 0, 'de', '2024-05-08'),
+    ('2024/S 009-000007', 'contract_award', '2024-06-22', 'BUY-DE-008', 'Bundesanstalt fuer Landwirtschaft', 'DE300', '72200000', NULL, 'Agricultural Data Platform', 'Data analytics platform', 'Open procedure', 500000, 470000, 'EUR', 'Atos SE', 'DE', 5, 'best_value', 18, 0, 'de', '2024-06-12'),
+
+    -- More AT awards for benchmarking
+    ('2024/S 010-000001', 'contract_award', '2024-02-28', 'BUY-AT-004', 'Magistrat Graz', 'AT221', '72200000', NULL, 'City IT Services Graz', 'Municipal IT services', 'Open procedure', 300000, 280000, 'EUR', 'Kapsch BusinessCom', 'AT', 4, 'best_value', 12, 0, 'de', '2024-02-18'),
+    ('2024/S 010-000002', 'contract_award', '2024-04-15', 'BUY-AT-004', 'Magistrat Graz', 'AT221', '72230000', NULL, 'E-Government Graz', 'Municipal e-government portal', 'Open procedure', 600000, 560000, 'EUR', 'A1 Telekom Austria', 'AT', 5, 'best_value', 24, 0, 'de', '2024-04-05'),
+    ('2024/S 010-000003', 'contract_award', '2024-06-08', 'BUY-AT-005', 'Medizinische Universitaet Wien', 'AT130', '72200000', NULL, 'Research IT Infrastructure', 'University research computing', 'Open procedure', 450000, 420000, 'EUR', 'Atos SE', 'AT', 3, 'best_value', 24, 0, 'de', '2024-05-28'),
+    ('2024/S 010-000004', 'contract_award', '2024-07-22', 'BUY-AT-005', 'Medizinische Universitaet Wien', 'AT130', '48600000', NULL, 'Medical Database System', 'Patient data management', 'Restricted procedure', 1200000, 1100000, 'EUR', 'Oracle Austria', 'AT', 2, 'best_value', 36, 0, 'de', '2024-07-12'),
+
+    -- 2023 additional awards for year-range testing
+    ('2023/S 002-000001', 'contract_award', '2023-01-20', 'BUY-DE-002', 'Stadt Muenchen', 'DE212', '72200000', NULL, 'IT Services Muenchen 2023', 'Annual IT services', 'Open procedure', 500000, 470000, 'EUR', 'Siemens AG', 'DE', 5, 'best_value', 12, 0, 'de', '2023-01-10'),
+    ('2023/S 002-000002', 'contract_award', '2023-04-15', 'BUY-DE-003', 'Deutsche Bahn AG', 'DE300', '72230000', NULL, 'DB Platform Dev 2023', 'Platform development project', 'Restricted procedure', 3500000, 3300000, 'EUR', 'SAP SE', 'DE', 4, 'best_value', 24, 0, 'de', '2023-04-05'),
+    ('2023/S 002-000003', 'contract_award', '2023-07-10', 'BUY-AT-002', 'Stadt Wien', 'AT130', '72200000', NULL, 'Wien Digital Services 2023', 'Digital services contract', 'Open procedure', 350000, 320000, 'EUR', 'A1 Telekom Austria', 'AT', 4, 'best_value', 12, 0, 'de', '2023-06-30'),
+    ('2023/S 002-000004', 'contract_award', '2023-09-20', 'BUY-CH-002', 'ETH Zurich', 'CH040', '72200000', NULL, 'ETH IT Services 2023', 'University IT services', 'Open procedure', 800000, 750000, 'CHF', 'Swisscom IT Services', 'CH', 3, 'best_value', 12, 0, 'de', '2023-09-10'),
+
+    -- Competitor diversity - more winners
+    ('2024/S 011-000001', 'contract_award', '2024-03-18', 'BUY-DE-004', 'Universitaet Heidelberg', 'DE125', '72230000', NULL, 'University Portal Development', 'Student portal modernization', 'Open procedure', 400000, 370000, 'EUR', 'T-Systems International', 'DE', 5, 'best_value', 18, 0, 'de', '2024-03-08'),
+    ('2024/S 011-000002', 'contract_award', '2024-04-22', 'BUY-DE-005', 'Landesamt fuer Digitalisierung Bayern', 'DE212', '72800000', NULL, 'Bavaria Security Assessment', 'State IT security assessment', 'Open procedure', 180000, 165000, 'EUR', 'SecurIT GmbH', 'DE', 7, 'best_value', 6, 0, 'de', '2024-04-12'),
+    ('2024/S 011-000003', 'contract_award', '2024-05-30', 'BUY-DE-008', 'Bundesanstalt fuer Landwirtschaft', 'DE300', '48000000', NULL, 'AgriData Software', 'Agricultural data analysis software', 'Open procedure', 300000, 280000, 'EUR', 'SAP SE', 'DE', 3, 'lowest_price', 24, 0, 'de', '2024-05-20'),
+    ('2024/S 011-000004', 'contract_award', '2024-06-18', 'BUY-CH-002', 'ETH Zurich', 'CH040', '72230000', NULL, 'Research Platform Dev', 'Scientific data platform', 'Selective procedure', 1500000, 1400000, 'CHF', 'Swisscom IT Services', 'CH', 4, 'best_value', 24, 0, 'de', '2024-06-08'),
+
+    -- Older contracts (2022) for renewal forecast testing (shorter duration)
+    ('2022/S 001-000001', 'contract_award', '2022-03-15', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72200000', NULL, 'BSI IT Services 2022', 'Annual IT consulting', 'Open procedure', 400000, 380000, 'EUR', 'SecurIT GmbH', 'DE', 5, 'best_value', 24, 0, 'de', '2022-03-05'),
+    ('2022/S 001-000002', 'contract_award', '2022-06-20', 'BUY-DE-002', 'Stadt Muenchen', 'DE212', '72200000', NULL, 'Muenchen IT 2022', 'Municipal IT services', 'Open procedure', 500000, 470000, 'EUR', 'Accenture GmbH', 'DE', 4, 'best_value', 24, 0, 'de', '2022-06-10'),
+    ('2022/S 001-000003', 'contract_award', '2022-09-10', 'BUY-AT-001', 'Bundesrechenzentrum GmbH', 'AT130', '72200000', NULL, 'BRZ Cloud 2022', 'Cloud services contract', 'Open procedure', 600000, 550000, 'EUR', 'A1 Telekom Austria', 'AT', 3, 'best_value', 24, 0, 'de', '2022-08-30'),
+    ('2022/S 001-000004', 'contract_award', '2022-04-25', 'BUY-DE-003', 'Deutsche Bahn AG', 'DE300', '72200000', NULL, 'DB IT Services 2022', 'Railway IT management', 'Open procedure', 3500000, 3300000, 'EUR', 'Atos SE', 'DE', 4, 'best_value', 24, 0, 'de', '2022-04-15'),
+    ('2022/S 001-000005', 'contract_award', '2022-07-15', 'BUY-AT-002', 'Stadt Wien', 'AT130', '72200000', NULL, 'Wien IT Services 2022', 'City IT services', 'Open procedure', 350000, 330000, 'EUR', 'Kapsch BusinessCom', 'AT', 5, 'best_value', 24, 0, 'de', '2022-07-05'),
+
+    -- Short-duration contracts for renewal forecasting
+    ('2024/S 012-000001', 'contract_award', '2024-01-05', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72800000', NULL, 'BSI Quarterly Pen Test Q1', 'Quarterly penetration testing', 'Open procedure', 50000, 45000, 'EUR', 'SecurIT GmbH', 'DE', 4, 'best_value', 3, 0, 'de', '2023-12-25'),
+    ('2024/S 012-000002', 'contract_award', '2024-04-01', 'BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', '72800000', NULL, 'BSI Quarterly Pen Test Q2', 'Quarterly penetration testing', 'Open procedure', 50000, 48000, 'EUR', 'SecurIT GmbH', 'DE', 3, 'best_value', 3, 0, 'de', '2024-03-22'),
+
+    -- Additional diverse data
+    ('2024/S 013-000001', 'contract_award', '2024-02-14', 'BUY-DE-009', 'Bundesministerium des Innern', 'DE300', '72200000', NULL, 'BMI IT Modernization', 'Federal IT modernization', 'Restricted procedure', 5000000, 4700000, 'EUR', 'T-Systems International', 'DE', 4, 'best_value', 48, 0, 'de', '2024-02-04'),
+    ('2024/S 013-000002', 'contract_award', '2024-03-28', 'BUY-DE-009', 'Bundesministerium des Innern', 'DE300', '72800000', NULL, 'BMI Security Services', 'Federal cybersecurity services', 'Open procedure', 1000000, 950000, 'EUR', 'SecurIT GmbH', 'DE', 6, 'best_value', 24, 0, 'de', '2024-03-18'),
+    ('2024/S 013-000003', 'contract_award', '2024-05-12', 'BUY-DE-009', 'Bundesministerium des Innern', 'DE300', '79100000', NULL, 'Legal IT Advisory', 'IT law and compliance advisory', 'Open procedure', 200000, 185000, 'EUR', 'CMS Hasche Sigle', 'DE', 3, 'best_value', 12, 0, 'de', '2024-05-02'),
+
+    -- More EU institution contracts
+    ('2024/S 014-000001', 'contract_award', '2024-04-18', 'BUY-EU-003', 'European Central Bank', 'DE600', '72200000', NULL, 'ECB IT Services', 'Central bank IT infrastructure', 'Restricted procedure', 3000000, 2850000, 'EUR', 'Accenture GmbH', 'DE', 5, 'best_value', 36, 0, 'en', '2024-04-08'),
+    ('2024/S 014-000002', 'contract_award', '2024-06-28', 'BUY-EU-003', 'European Central Bank', 'DE600', '72800000', NULL, 'ECB Cybersecurity Framework', 'Banking cybersecurity services', 'Restricted procedure', 2000000, 1900000, 'EUR', 'SecurIT GmbH', 'DE', 4, 'best_value', 24, 0, 'en', '2024-06-18'),
+
+    -- Construction in CH
+    ('2024/S 015-000001', 'contract_award', '2024-05-08', 'BUY-CH-003', 'Stadt Zuerich', 'CH040', '45210000', NULL, 'Schulhaus Bau Zuerich', 'School building construction', 'Open procedure', 12000000, 11500000, 'CHF', 'Implenia AG', 'CH', 4, 'best_value', 30, 0, 'de', '2024-04-28'),
+    ('2024/S 015-000002', 'contract_award', '2024-07-12', 'BUY-CH-003', 'Stadt Zuerich', 'CH040', '72200000', NULL, 'Smart City Zuerich', 'Smart city initiative', 'Open procedure', 800000, 750000, 'CHF', 'Swisscom IT Services', 'CH', 5, 'best_value', 24, 0, 'de', '2024-07-02');
+  `);
+
+  // ── Seed data: Buyer profiles (pre-computed) ────────────────────────────
+
+  db.exec(`
+    INSERT INTO buyer_profiles (buyer_id, buyer_name, buyer_nuts, total_awards, avg_value_eur, median_value_eur, preferred_procedure, preferred_criteria, avg_bidders, first_seen, last_seen, top_cpv_codes) VALUES
+    ('BUY-DE-001', 'Bundesamt fuer Sicherheit in der Informationstechnik', 'DE300', 12, 650000, 480000, 'Open procedure', 'best_value', 5.5, '2022-03-15', '2024-07-10', '72200000,72230000,72800000,79100000'),
+    ('BUY-DE-002', 'Stadt Muenchen', 'DE212', 9, 1200000, 720000, 'Open procedure', 'best_value', 5.2, '2022-06-20', '2024-05-20', '72200000,72250000,48000000,45210000,45300000'),
+    ('BUY-DE-003', 'Deutsche Bahn AG', 'DE300', 7, 3800000, 3300000, 'Open procedure', 'best_value', 4.7, '2022-04-25', '2024-07-10', '72200000,72230000,72800000'),
+    ('BUY-AT-001', 'Bundesrechenzentrum GmbH', 'AT130', 7, 700000, 650000, 'Open procedure', 'best_value', 3.5, '2022-09-10', '2024-04-10', '72200000,72230000,48600000,79400000'),
+    ('BUY-AT-002', 'Stadt Wien', 'AT130', 10, 2100000, 850000, 'Open procedure', 'best_value', 5.0, '2022-07-15', '2024-07-22', '72200000,72250000,72800000,45210000,45200000'),
+    ('BUY-CH-001', 'Bundesamt fuer Informatik und Telekommunikation', 'CH011', 5, 740000, 380000, 'Open procedure', 'best_value', 5.0, '2023-03-15', '2024-05-10', '72200000,72230000,72800000'),
+    ('BUY-EU-001', 'European Commission - DG DIGIT', 'BE100', 6, 2700000, 1900000, 'Open procedure', 'best_value', 5.3, '2023-06-25', '2024-06-30', '72200000,72230000,72800000');
+  `);
+
+  // ── Seed data: CPV benchmarks (pre-computed) ────────────────────────────
+
+  db.exec(`
+    INSERT INTO cpv_benchmarks (cpv_main, nuts_country, year, award_count, p25_value, median_value, p75_value, avg_bidders, top_winners) VALUES
+    ('72200000', 'DE', 2024, 15, 470000, 720000, 2850000, 5.1, 'SecurIT GmbH,Accenture GmbH,Atos SE,Capgemini Deutschland,T-Systems International'),
+    ('72200000', 'DE', 2023, 5, 420000, 620000, 3800000, 5.0, 'SecurIT GmbH,Accenture GmbH,Atos SE,Siemens AG'),
+    ('72200000', 'AT', 2024, 6, 320000, 585000, 750000, 4.3, 'Kapsch BusinessCom,A1 Telekom Austria,Atos SE'),
+    ('72200000', 'AT', 2023, 3, 320000, 370000, 650000, 4.0, 'Kapsch BusinessCom,A1 Telekom Austria'),
+    ('72200000', 'CH', 2024, 3, 380000, 750000, 950000, 4.0, 'Swisscom IT Services,Atos SE,Deloitte AG'),
+    ('72200000', 'BE', 2024, 3, 1400000, 1900000, 2850000, 5.7, 'Capgemini Deutschland,Atos SE,Accenture GmbH'),
+    ('72230000', 'DE', 2024, 5, 370000, 1850000, 2900000, 5.6, 'Capgemini Deutschland,SAP SE,Siemens AG'),
+    ('72800000', 'DE', 2024, 5, 140000, 165000, 950000, 5.6, 'SecurIT GmbH'),
+    ('45210000', 'DE', 2024, 1, 7500000, 7500000, 7500000, 5.0, 'HOCHTIEF AG'),
+    ('45210000', 'AT', 2024, 1, 14200000, 14200000, 14200000, 4.0, 'STRABAG SE'),
+    ('45210000', 'CH', 2024, 1, 11500000, 11500000, 11500000, 4.0, 'Implenia AG'),
+    ('48000000', 'DE', 2024, 2, 280000, 690000, 1100000, 3.0, 'Microsoft Deutschland,SAP SE');
+  `);
+
   // ── Build the adapter ───────────────────────────────────────────────────
 
   const adapter: DatabaseAdapter = {

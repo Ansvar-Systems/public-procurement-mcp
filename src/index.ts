@@ -31,6 +31,15 @@ import { getExclusionGrounds } from './tools/get-exclusion-grounds.js';
 import { getTimeLimits } from './tools/get-time-limits.js';
 import { compareRequirements } from './tools/compare-requirements.js';
 import { validateCitation } from './tools/validate-citation.js';
+import { listSources } from './tools/list-sources.js';
+import { about } from './tools/about.js';
+import { checkDataFreshness } from './tools/check-data-freshness.js';
+import { getBuyerProfile } from './tools/get-buyer-profile.js';
+import { getAwardHistory } from './tools/get-award-history.js';
+import { getCompetitorProfile } from './tools/get-competitor-profile.js';
+import { getPriceBenchmark } from './tools/get-price-benchmark.js';
+import { getFrameworkAgreements } from './tools/get-framework-agreements.js';
+import { getRenewalForecast } from './tools/get-renewal-forecast.js';
 
 // ── Tool definitions ────────────────────────────────────────────────────────
 
@@ -284,7 +293,7 @@ const TOOLS = [
   },
 ] as const;
 
-// ── Implemented tools (1-10) ────────────────────────────────────────────────
+// ── Implemented tools (all 19) ──────────────────────────────────────────────
 
 const IMPLEMENTED_TOOLS = new Set([
   'search_legislation',
@@ -297,6 +306,15 @@ const IMPLEMENTED_TOOLS = new Set([
   'get_time_limits',
   'compare_requirements',
   'validate_citation',
+  'list_sources',
+  'about',
+  'check_data_freshness',
+  'get_buyer_profile',
+  'get_award_history',
+  'get_competitor_profile',
+  'get_price_benchmark',
+  'get_framework_agreements',
+  'get_renewal_forecast',
 ]);
 
 /**
@@ -374,6 +392,58 @@ function dispatchTool(
     case 'validate_citation':
       return validateCitation(db, {
         citation: a.citation as string,
+      });
+
+    case 'list_sources':
+      return listSources(db);
+
+    case 'about':
+      return about(db);
+
+    case 'check_data_freshness':
+      return checkDataFreshness(db);
+
+    case 'get_buyer_profile':
+      return getBuyerProfile(db, {
+        buyer_id: a.buyer_id as string | undefined,
+        buyer_name: a.buyer_name as string | undefined,
+      });
+
+    case 'get_award_history':
+      return getAwardHistory(db, {
+        cpv_code: a.cpv_code as string,
+        nuts_region: (a.buyer_nuts ?? a.nuts_region) as string | undefined,
+        year_from: a.date_from ? new Date(a.date_from as string).getFullYear() : a.year_from as number | undefined,
+        year_to: a.date_to ? new Date(a.date_to as string).getFullYear() : a.year_to as number | undefined,
+        limit: a.limit as number | undefined,
+      });
+
+    case 'get_competitor_profile':
+      return getCompetitorProfile(db, {
+        company_name: a.winner_name as string,
+      });
+
+    case 'get_price_benchmark':
+      return getPriceBenchmark(db, {
+        cpv_code: a.cpv_code as string,
+        nuts_country: a.nuts_country as string | undefined,
+        year_from: a.year as number | undefined,
+        year_to: a.year as number | undefined,
+      });
+
+    case 'get_framework_agreements':
+      return getFrameworkAgreements(db, {
+        cpv_code: a.cpv_code as string,
+        nuts_region: (a.buyer_nuts ?? a.nuts_region) as string | undefined,
+        limit: a.limit as number | undefined,
+      });
+
+    case 'get_renewal_forecast':
+      return getRenewalForecast(db, {
+        cpv_code: a.cpv_code as string | undefined,
+        nuts_region: (a.buyer_nuts ?? a.nuts_region) as string | undefined,
+        months_ahead: a.months_ahead as number | undefined,
+        limit: a.limit as number | undefined,
       });
 
     default:
