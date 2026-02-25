@@ -1,0 +1,122 @@
+{
+  "eu": [
+    {
+      "celex": "32014L0024",
+      "title": "Directive 2014/24/EU — Public procurement",
+      "short_title": "2014/24/EU",
+      "jurisdiction": "EU",
+      "type": "eu_directive",
+      "source": "eurlex"
+    },
+    {
+      "celex": "32014L0025",
+      "title": "Directive 2014/25/EU — Utilities procurement",
+      "short_title": "2014/25/EU",
+      "jurisdiction": "EU",
+      "type": "eu_directive",
+      "source": "eurlex"
+    },
+    {
+      "celex": "32014L0023",
+      "title": "Directive 2014/23/EU — Concessions",
+      "short_title": "2014/23/EU",
+      "jurisdiction": "EU",
+      "type": "eu_directive",
+      "source": "eurlex"
+    },
+    {
+      "celex": "32009L0081",
+      "title": "Directive 2009/81/EC — Defence procurement",
+      "short_title": "2009/81/EC",
+      "jurisdiction": "EU",
+      "type": "eu_directive",
+      "source": "eurlex"
+    },
+    {
+      "celex": "32007L0066",
+      "title": "Directive 2007/66/EC — Remedies",
+      "short_title": "2007/66/EC",
+      "jurisdiction": "EU",
+      "type": "eu_directive",
+      "source": "eurlex"
+    }
+  ],
+  "ch": [
+    {
+      "id": "SR-172.056.1",
+      "title": "BöB — Federal Act on Public Procurement",
+      "short_title": "BöB",
+      "jurisdiction": "CH",
+      "type": "national_law",
+      "source": "fedlex"
+    },
+    {
+      "id": "SR-172.056.11",
+      "title": "VöB — Ordinance on Public Procurement",
+      "short_title": "VöB",
+      "jurisdiction": "CH",
+      "type": "national_law",
+      "source": "fedlex"
+    }
+  ],
+  "at": [
+    {
+      "id": "BVergG_2018",
+      "title": "BVergG 2018 — Bundesvergabegesetz",
+      "short_title": "BVergG 2018",
+      "jurisdiction": "AT",
+      "type": "national_law",
+      "source": "ris"
+    },
+    {
+      "id": "BVergGKonz_2018",
+      "title": "BVergGKonz 2018 — Bundesvergabegesetz Konzessionen",
+      "short_title": "BVergGKonz 2018",
+      "jurisdiction": "AT",
+      "type": "national_law",
+      "source": "ris"
+    }
+  ],
+  "de": [
+    {
+      "id": "GWB_4",
+      "title": "GWB Part 4 — Vergaberecht",
+      "short_title": "GWB",
+      "jurisdiction": "DE",
+      "type": "national_law",
+      "source": "gesetze_im_internet"
+    },
+    {
+      "id": "VgV",
+      "title": "VgV — Vergabeverordnung",
+      "short_title": "VgV",
+      "jurisdiction": "DE",
+      "type": "national_law",
+      "source": "gesetze_im_internet"
+    },
+    {
+      "id": "SektVO",
+      "title": "SektVO — Sektorenverordnung",
+      "short_title": "SektVO",
+      "jurisdiction": "DE",
+      "type": "national_law",
+      "source": "gesetze_im_internet"
+    },
+    {
+      "id": "KonzVgV",
+      "title": "KonzVgV — Konzessionsvergabeverordnung",
+      "short_title": "KonzVgV",
+      "jurisdiction": "DE",
+      "type": "national_law",
+      "source": "gesetze_im_internet"
+    },
+    {
+      "id": "VSVgV",
+      "title": "VSVgV — Vergabeverordnung Verteidigung und Sicherheit",
+      "short_title": "VSVgV",
+      "jurisdiction": "DE",
+      "type": "national_law",
+      "source": "gesetze_im_internet"
+    }
+  ]
+}
