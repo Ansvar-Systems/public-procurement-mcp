@@ -28,7 +28,7 @@ export function getThresholds(
       d.short_title AS directive_short_title,
       d.jurisdiction
     FROM thresholds t
-    JOIN directives d ON d.id = t.directive_id
+    LEFT JOIN directives d ON d.id = t.directive_id
     WHERE 1=1
   `;
 

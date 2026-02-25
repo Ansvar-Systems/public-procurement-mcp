@@ -9,9 +9,13 @@
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createMcpServer } from './index.js';
+import { createAdapter, getDefaultDbPath } from './database/adapter.js';
 
 async function main() {
-  const server = createMcpServer();
+  const dbPath = getDefaultDbPath();
+  const db = await createAdapter(dbPath, { readonly: true });
+  console.error(`Database loaded: ${dbPath}`);
+  const server = createMcpServer(db);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('Public Procurement MCP server running on stdio');

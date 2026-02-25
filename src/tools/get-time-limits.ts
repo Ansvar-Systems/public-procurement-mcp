@@ -27,7 +27,7 @@ export function getTimeLimits(
       d.short_title AS directive_short_title,
       d.jurisdiction
     FROM procedure_types pt
-    JOIN directives d ON d.id = pt.directive_id
+    LEFT JOIN directives d ON d.id = pt.directive_id
     WHERE pt.time_limits_json IS NOT NULL
   `;
 

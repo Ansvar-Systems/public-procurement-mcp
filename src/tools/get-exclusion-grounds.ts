@@ -33,7 +33,7 @@ export function getExclusionGrounds(
       d.title AS directive_title,
       d.short_title AS directive_short_title
     FROM exclusion_grounds eg
-    JOIN directives d ON d.id = eg.directive_id
+    LEFT JOIN directives d ON d.id = eg.directive_id
     WHERE eg.jurisdiction = ?
   `;
 

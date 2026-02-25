@@ -14,11 +14,15 @@ import { createServer } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { randomUUID } from 'crypto';
 import { createMcpServer } from './index.js';
+import { createAdapter, getDefaultDbPath } from './database/adapter.js';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
 async function main() {
-  const mcpServer = createMcpServer();
+  const dbPath = getDefaultDbPath();
+  const db = await createAdapter(dbPath, { readonly: true });
+  console.error(`Database loaded: ${dbPath}`);
+  const mcpServer = createMcpServer(db);
 
   // Map to store transports by session ID
   const transports = new Map<string, StreamableHTTPServerTransport>();

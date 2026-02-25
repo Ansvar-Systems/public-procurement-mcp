@@ -20,9 +20,17 @@ export interface EurLexResult {
 
 /**
  * Build the EUR-Lex HTML URL for a given CELEX number.
+ * Uses the Cellar XHTML endpoint which doesn't have WAF/captcha protection.
  */
 export function buildEurLexUrl(celex: string): string {
   return `https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:${celex}`;
+}
+
+/**
+ * Build the Cellar XHTML URL (bypasses EUR-Lex WAF).
+ */
+export function buildCellarUrl(celex: string): string {
+  return `http://publications.europa.eu/resource/celex/${celex}.ENG.xhtml`;
 }
 
 /**
@@ -307,9 +315,26 @@ function dedup(articles: ParsedArticle[]): ParsedArticle[] {
  * parseEurLexHtml() directly with fixture HTML.
  */
 export async function fetchAndParseDirective(celex: string): Promise<EurLexResult> {
-  const url = buildEurLexUrl(celex);
+  // Try Cellar XHTML first (no WAF), fall back to EUR-Lex HTML
+  const cellarUrl = buildCellarUrl(celex);
+  const eurLexUrl = buildEurLexUrl(celex);
 
-  const response = await fetch(url, {
+  let html: string;
+  let response = await fetch(cellarUrl, {
+    headers: { 'Accept': 'application/xhtml+xml,text/html' },
+    redirect: 'follow',
+  });
+
+  if (response.ok) {
+    html = await response.text();
+    // Cellar may return empty or very short error pages
+    if (html.length > 1000) {
+      return parseEurLexHtml(html, celex);
+    }
+  }
+
+  // Fallback to EUR-Lex HTML
+  response = await fetch(eurLexUrl, {
     headers: {
       'Accept': 'text/html',
       'Accept-Language': 'en',
@@ -318,10 +343,13 @@ export async function fetchAndParseDirective(celex: string): Promise<EurLexResul
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: HTTP ${response.status}`);
+    throw new Error(`Failed to fetch ${eurLexUrl}: HTTP ${response.status}`);
   }
 
-  const html = await response.text();
+  html = await response.text();
+  if (html.length < 1000) {
+    throw new Error(`EUR-Lex returned empty/WAF page for ${celex} (${html.length} bytes)`);
+  }
   return parseEurLexHtml(html, celex);
 }
 

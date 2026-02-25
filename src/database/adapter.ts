@@ -44,9 +44,9 @@ export async function createAdapter(
   dbPath: string,
   options: { readonly?: boolean; runSchema?: boolean } = {}
 ): Promise<DatabaseAdapter> {
-  // node-sqlite3-wasm exports { Database } on the default export object
+  // node-sqlite3-wasm exports Database on the default export object
   const sqliteModule = await import('node-sqlite3-wasm');
-  const Database = sqliteModule.Database;
+  const Database = sqliteModule.default?.Database ?? (sqliteModule as any).Database;
   const db = new Database(dbPath, { readOnly: options.readonly });
 
   // Run schema if requested

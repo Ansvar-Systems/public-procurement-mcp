@@ -60,7 +60,7 @@ function compareThresholds(db: DatabaseAdapter, jurisdictions: string[]) {
        t.value_eur,
        t.effective_from
      FROM thresholds t
-     JOIN directives d ON d.id = t.directive_id
+     LEFT JOIN directives d ON d.id = t.directive_id
      WHERE d.jurisdiction IN (${placeholders})
      ORDER BY t.category, d.jurisdiction`,
     jurisdictions
@@ -97,7 +97,7 @@ function compareExclusionGrounds(db: DatabaseAdapter, jurisdictions: string[]) {
        eg.article_reference,
        d.short_title AS directive_short_title
      FROM exclusion_grounds eg
-     JOIN directives d ON d.id = eg.directive_id
+     LEFT JOIN directives d ON d.id = eg.directive_id
      WHERE eg.jurisdiction IN (${placeholders})
      ORDER BY eg.jurisdiction, eg.type, eg.ground`,
     jurisdictions
@@ -135,7 +135,7 @@ function compareProcedures(db: DatabaseAdapter, jurisdictions: string[]) {
        pt.time_limits_json,
        d.short_title AS directive_short_title
      FROM procedure_types pt
-     JOIN directives d ON d.id = pt.directive_id
+     LEFT JOIN directives d ON d.id = pt.directive_id
      WHERE d.jurisdiction IN (${placeholders})
      ORDER BY d.jurisdiction, pt.name`,
     jurisdictions

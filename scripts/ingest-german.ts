@@ -23,10 +23,21 @@ export interface GermanLawResult {
  */
 const GII_SLUGS: Record<string, string> = {
   'GWB_4': 'gwb',
-  'VgV': 'vgv',
-  'SektVO': 'sektvo',
+  'VgV': 'vgv_2016',
+  'SektVO': 'sektvo_2016',
   'KonzVgV': 'konzvgv',
   'VSVgV': 'vsvgv',
+};
+
+/**
+ * Map census IDs to BJNR identifiers for full-text download.
+ */
+const GII_BJNR: Record<string, string> = {
+  'GWB_4': 'BJNR252110998',
+  'VgV': 'BJNR062410016',
+  'SektVO': 'BJNR065700016',
+  'KonzVgV': 'BJNR068300016',
+  'VSVgV': 'BJNR150900012',
 };
 
 /**
@@ -80,8 +91,12 @@ function parseGiiStructure(html: string): ParsedArticle[] {
   let match: RegExpExecArray | null;
   paraRe.lastIndex = 0;
   while ((match = paraRe.exec(html)) !== null) {
-    const text = stripHtml(match[1]).trim();
-    const numMatch = text.match(/§\s*(\d+[a-z]?)/i);
+    // Decode HTML entities (&#167; = §) before matching
+    const rawText = match[1].replace(/&#167;/g, '§').replace(/&sect;/g, '§');
+    const text = stripHtml(rawText).trim();
+    // Skip range entries like "§§ 4 bis 17" and TOC entries like "Inhaltsübersicht"
+    if (/§§|bis\s+\d|Inhalts/i.test(text)) continue;
+    const numMatch = text.match(/§\s*(\d+[a-z]?)/i) || text.match(/^(\d+[a-z]?)$/i);
     if (numMatch) {
       positions.push({ number: numMatch[1], index: match.index + match[0].length });
     }
@@ -176,7 +191,13 @@ export function parseGermanHtml(html: string, lawId: string): GermanLawResult {
  * Fetch and parse a German law from gesetze-im-internet.de (network-dependent).
  */
 export async function fetchGermanLaw(lawId: string): Promise<GermanLawResult> {
-  const url = buildGiiUrl(lawId);
+  const bjnr = GII_BJNR[lawId];
+  const slug = GII_SLUGS[lawId] || lawId.toLowerCase();
+
+  // Use full-text BJNR URL if available, otherwise fall back to index page
+  const url = bjnr
+    ? `https://www.gesetze-im-internet.de/${slug}/${bjnr}.html`
+    : buildGiiUrl(lawId);
 
   const response = await fetch(url, {
     headers: {
