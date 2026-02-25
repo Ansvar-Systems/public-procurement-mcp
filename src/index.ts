@@ -20,6 +20,17 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import type { DatabaseAdapter } from './database/adapter.js';
+import { searchLegislation } from './tools/search-legislation.js';
+import { getProvision } from './tools/get-provision.js';
+import { getDirectiveOverview } from './tools/get-directive-overview.js';
+import { getCpvCodes } from './tools/get-cpv-codes.js';
+import { getThresholds } from './tools/get-thresholds.js';
+import { getProcedureTypes } from './tools/get-procedure-types.js';
+import { getExclusionGrounds } from './tools/get-exclusion-grounds.js';
+import { getTimeLimits } from './tools/get-time-limits.js';
+import { compareRequirements } from './tools/compare-requirements.js';
+import { validateCitation } from './tools/validate-citation.js';
 
 // ── Tool definitions ────────────────────────────────────────────────────────
 
@@ -273,9 +284,106 @@ const TOOLS = [
   },
 ] as const;
 
+// ── Implemented tools (1-10) ────────────────────────────────────────────────
+
+const IMPLEMENTED_TOOLS = new Set([
+  'search_legislation',
+  'get_provision',
+  'get_directive_overview',
+  'get_cpv_codes',
+  'get_thresholds',
+  'get_procedure_types',
+  'get_exclusion_grounds',
+  'get_time_limits',
+  'compare_requirements',
+  'validate_citation',
+]);
+
+/**
+ * Dispatch a tool call to the correct implementation.
+ * Returns the tool response object, or null if the tool is not yet implemented.
+ */
+function dispatchTool(
+  db: DatabaseAdapter,
+  name: string,
+  args: Record<string, unknown> | undefined
+): unknown | null {
+  const a = args ?? {};
+
+  switch (name) {
+    case 'search_legislation':
+      return searchLegislation(db, {
+        query: a.query as string,
+        jurisdiction: a.jurisdiction as string | undefined,
+        directive: a.directive as string | undefined,
+        limit: a.limit as number | undefined,
+      });
+
+    case 'get_provision':
+      return getProvision(db, {
+        directive_id: a.directive_id as string,
+        article: a.article as string | undefined,
+      });
+
+    case 'get_directive_overview':
+      return getDirectiveOverview(db, {
+        directive_id: a.directive_id as string,
+      });
+
+    case 'get_cpv_codes':
+      return getCpvCodes(db, {
+        query: a.query as string,
+        level: a.level as number | undefined,
+        limit: a.limit as number | undefined,
+      });
+
+    case 'get_thresholds':
+      return getThresholds(db, {
+        category: a.category as string | undefined,
+        jurisdiction: a.jurisdiction as string | undefined,
+        as_of_date: a.as_of_date as string | undefined,
+      });
+
+    case 'get_procedure_types':
+      return getProcedureTypes(db, {
+        directive_id: a.directive_id as string | undefined,
+        jurisdiction: a.jurisdiction as string | undefined,
+        above_threshold: a.above_threshold as boolean | undefined,
+        value_eur: a.value_eur as number | undefined,
+      });
+
+    case 'get_exclusion_grounds':
+      return getExclusionGrounds(db, {
+        jurisdiction: a.jurisdiction as string,
+        type: a.type as 'mandatory' | 'discretionary' | 'both' | undefined,
+      });
+
+    case 'get_time_limits':
+      return getTimeLimits(db, {
+        procedure_type: a.procedure_type as string | undefined,
+        directive_id: a.directive_id as string | undefined,
+        is_prior_information: a.is_prior_information as boolean | undefined,
+      });
+
+    case 'compare_requirements':
+      return compareRequirements(db, {
+        topic: a.topic as string,
+        jurisdictions: a.jurisdictions as string[],
+      });
+
+    case 'validate_citation':
+      return validateCitation(db, {
+        citation: a.citation as string,
+      });
+
+    default:
+      return null;
+  }
+}
+
 // ── Server factory ──────────────────────────────────────────────────────────
 
-export function createMcpServer(): Server {
+export function createMcpServer(db?: DatabaseAdapter): Server {
   const server = new Server(
     {
       name: 'public-procurement-mcp',
@@ -315,7 +423,22 @@ export function createMcpServer(): Server {
       };
     }
 
-    // All tools return stub responses for now
+    // Dispatch to implementation if available
+    if (IMPLEMENTED_TOOLS.has(name) && db) {
+      const result = dispatchTool(db, name, args as Record<string, unknown> | undefined);
+      if (result !== null) {
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify(result),
+            },
+          ],
+        };
+      }
+    }
+
+    // Stub response for unimplemented tools
     return {
       content: [
         {
@@ -334,4 +457,4 @@ export function createMcpServer(): Server {
   return server;
 }
 
-export { TOOLS };
+export { TOOLS, IMPLEMENTED_TOOLS, dispatchTool };
