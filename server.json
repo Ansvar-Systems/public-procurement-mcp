@@ -1,0 +1,23 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "eu.ansvar/public-procurement-mcp",
+  "description": "Public procurement law, CPV taxonomy, TED award intelligence — 19 MCP tools for EU/CH/AT/DE procurement",
+  "repository": {
+    "url": "https://github.com/Ansvar-Systems/public-procurement-mcp",
+    "source": "github"
+  },
+  "homepage": "https://ansvar.eu",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "keywords": [
+    "public-procurement",
+    "procurement",
+    "cpv",
+    "ted",
+    "eu-directives",
+    "vergaberecht",
+    "bverg",
+    "gpa",
+    "tenders"
+  ]
+}

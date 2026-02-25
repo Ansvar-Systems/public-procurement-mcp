@@ -1,0 +1,133 @@
+# Data Source Provenance — Public Procurement MCP Server
+# This file documents all data sources, their authority level, and update mechanisms.
+
+sources:
+  - name: EUR-Lex
+    url: https://eur-lex.europa.eu
+    authority: primary
+    description: >
+      Official online access to EU law. Source for EU procurement directives
+      (2014/24/EU, 2014/25/EU, 2014/23/EU) and related regulations.
+    data_types:
+      - directive articles
+      - recitals
+      - definitions
+    ingestion_method: Automated EUR-Lex parser
+    ingestion_scripts:
+      - scripts/ingest-legal.ts
+    update_frequency: as-needed
+    license: CC BY 4.0
+
+  - name: TED (Tenders Electronic Daily)
+    url: https://ted.europa.eu
+    authority: primary
+    description: >
+      Official EU public procurement journal. Source for contract award notices,
+      contract notices, and prior information notices.
+    data_types:
+      - award notices
+      - contract notices
+      - buyer metadata
+    ingestion_method: TED Open Data API
+    ingestion_scripts:
+      - scripts/ingest-ted-notices.ts
+    update_frequency: weekly
+    license: Open Data (EU Open Data Portal)
+
+  - name: SIMAP / CPV
+    url: https://simap.ted.europa.eu/cpv
+    authority: primary
+    description: >
+      Common Procurement Vocabulary (CPV) classification system.
+      Official EU taxonomy for procurement categories.
+    data_types:
+      - cpv_codes
+    ingestion_method: Static CSV/XML import
+    ingestion_scripts:
+      - scripts/ingest-reference.ts
+    update_frequency: as-needed (CPV rarely changes)
+    license: Public domain
+
+  - name: Eurostat NUTS
+    url: https://ec.europa.eu/eurostat/web/nuts
+    authority: primary
+    description: >
+      Nomenclature of Territorial Units for Statistics (NUTS).
+      Used for geographic classification of procurement notices.
+    data_types:
+      - nuts_regions
+    ingestion_method: Static CSV import
+    ingestion_scripts:
+      - scripts/ingest-reference.ts
+    update_frequency: as-needed
+
+  - name: RIS (Austrian Legal Information System)
+    url: https://www.ris.bka.gv.at
+    authority: primary
+    description: >
+      Official Austrian federal law portal. Source for the
+      Bundesvergabegesetz (BVergG) and related procurement regulations.
+    data_types:
+      - national law provisions
+    ingestion_method: Automated parser
+    ingestion_scripts:
+      - scripts/ingest-legal.ts
+    update_frequency: as-needed
+    license: Public domain
+
+  - name: Gesetze im Internet
+    url: https://www.gesetze-im-internet.de
+    authority: primary
+    description: >
+      Official German federal law portal. Source for the Gesetz gegen
+      Wettbewerbsbeschrankungen (GWB) Part 4 and Vergabeverordnung (VgV).
+    data_types:
+      - national law provisions
+    ingestion_method: Automated parser
+    ingestion_scripts:
+      - scripts/ingest-legal.ts
+    update_frequency: as-needed
+    license: Public domain
+
+  - name: Fedlex
+    url: https://www.fedlex.admin.ch
+    authority: primary
+    description: >
+      Official Swiss federal law portal. Source for the Bundesgesetz uber
+      das offentliche Beschaffungswesen (BoeB).
+    data_types:
+      - national law provisions
+    ingestion_method: Automated parser
+    ingestion_scripts:
+      - scripts/ingest-legal.ts
+    update_frequency: as-needed
+    license: Public domain
+
+derived_data:
+  - name: Buyer Profiles
+    description: >
+      Aggregated profiles of contracting authorities computed from TED
+      award notices. Includes total awards, average values, preferred
+      procedures, and top CPV codes.
+    source_tables: notices -> buyer_profiles
+    authority: derived (computed from primary data)
+
+  - name: CPV Benchmarks
+    description: >
+      Price benchmarking data computed from TED award notices. Includes
+      percentile values, average bidders, and top winners by CPV code
+      and country.
+    source_tables: notices -> cpv_benchmarks
+    authority: derived (computed from primary data)
+
+notes:
+  - >
+    All legal text is from official public sources. This dataset should be
+    verified against official publications for legal purposes.
+  - >
+    TED award data is historical and sourced from the EU Open Data Portal.
+    Award values and bidder counts may have data quality limitations in
+    older notices.
+  - >
+    Derived data (buyer profiles, benchmarks) is computed from primary data
+    and should be treated as indicative, not authoritative.

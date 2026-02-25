@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Database (built from source data)
+data/*.db
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+.claude/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# Internal documentation and work-in-progress
+internal/
+
+# MCP Registry tokens and local configs
+.mcpregistry_*
+.playwright-mcp/
+
+# Git worktrees
+.worktrees/
+.dev.vars
+.wrangler/
+
+# Vercel
+.vercel

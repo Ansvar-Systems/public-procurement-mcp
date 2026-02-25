@@ -1,0 +1,29 @@
+# Gitleaks configuration for Public Procurement MCP
+# https://github.com/gitleaks/gitleaks
+
+title = "Public Procurement MCP - Secret Detection"
+
+[extend]
+# Use default gitleaks rules
+useDefault = true
+
+[allowlist]
+description = "Known false positives and example credentials"
+
+# Example/development tokens in documentation
+regexes = [
+  '''dev-token''',
+  '''example-token''',
+  '''your-token-here''',
+  '''<password>''',
+  '''user:pass''',
+  '''postgres:postgres''',
+]
+
+# Files to skip
+paths = [
+  '''internal/.*''',
+  '''tests/fixtures/.*''',
+  '''examples/.*''',
+  '''\.env\.local$''',
+]
