@@ -1,0 +1,119 @@
+name: Data Update Check
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Daily at 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  freshness-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Check database age
+        id: check
+        shell: bash
+        run: |
+          MAX_AGE_DAYS="${MAX_DB_AGE_DAYS:-90}"
+          DB_FILE="data/database.db"
+          if [ ! -f "$DB_FILE" ]; then
+            echo "status=error" >> "$GITHUB_OUTPUT"
+            echo "detail=Database file not found" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Try to read build_date from db_metadata
+          BUILD_DATE=""
+          if command -v sqlite3 &>/dev/null; then
+            BUILD_DATE=$(sqlite3 "$DB_FILE" "SELECT value FROM db_metadata WHERE key='build_date'" 2>/dev/null || echo "")
+          elif command -v npx &>/dev/null; then
+            BUILD_DATE=$(npx -y better-sqlite3-cli "$DB_FILE" "SELECT value FROM db_metadata WHERE key='build_date'" 2>/dev/null | tail -1 || echo "")
+          fi
+          if [ -z "$BUILD_DATE" ]; then
+            echo "status=unknown" >> "$GITHUB_OUTPUT"
+            echo "detail=No build_date in db_metadata" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          AGE_DAYS=$(( ($(date +%s) - $(date -d "$BUILD_DATE" +%s)) / 86400 ))
+          if [ "$AGE_DAYS" -gt "$MAX_AGE_DAYS" ]; then
+            echo "status=stale" >> "$GITHUB_OUTPUT"
+            echo "detail=Database is ${AGE_DAYS} days old (threshold: ${MAX_AGE_DAYS})" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fresh" >> "$GITHUB_OUTPUT"
+            echo "detail=Database is ${AGE_DAYS} days old" >> "$GITHUB_OUTPUT"
+          fi
+
+  report:
+    needs: freshness-check
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create or update issue when stale
+        if: needs.freshness-check.outputs.status == 'stale' || needs.freshness-check.outputs.status == 'error'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ needs.freshness-check.outputs.status }}';
+            const detail = '${{ needs.freshness-check.outputs.detail }}';
+            const title = status === 'error'
+              ? 'Data Freshness: Check error'
+              : 'Data Freshness: Database is stale';
+            const body = [
+              `**Automated freshness check:** ${new Date().toISOString()}`,
+              '',
+              `| Metric | Value |`,
+              `|--------|-------|`,
+              `| Status | ${status} |`,
+              `| Detail | ${detail} |`,
+              '',
+              '### Recommended actions',
+              '1. Re-run ingestion pipeline',
+              '2. Verify upstream source is accessible',
+              '3. Re-run tests before release',
+            ].join('\n');
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'data-update',
+            });
+            if (issues.length > 0) {
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issues[0].number, title, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ['data-update', 'automated'],
+              });
+            }
+
+      - name: Close stale issues when fresh
+        if: needs.freshness-check.outputs.status == 'fresh'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'data-update',
+            });
+            for (const issue of issues) {
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issue.number, state: 'closed', state_reason: 'completed',
+              });
+            }
