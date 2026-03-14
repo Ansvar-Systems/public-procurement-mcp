@@ -18,9 +18,9 @@ import { createMcpServer } from './index.js';
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
 async function main() {
-  const mcpServer = createMcpServer();
-
   // Map to store transports by session ID
+  // Each session gets its own Server + Transport pair because the MCP SDK
+  // Server class only supports a single transport connection at a time.
   const transports = new Map<string, StreamableHTTPServerTransport>();
 
   const httpServer = createServer(async (req, res) => {
@@ -49,6 +49,7 @@ async function main() {
       if (sessionId && transports.has(sessionId)) {
         transport = transports.get(sessionId)!;
       } else {
+        const mcpServer = createMcpServer();
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
         });
