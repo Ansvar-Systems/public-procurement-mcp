@@ -21,6 +21,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import type { DatabaseAdapter } from './database/adapter.js';
+import { buildCitation } from './citation.js';
 import { searchLegislation } from './tools/search-legislation.js';
 import { getProvision } from './tools/get-provision.js';
 import { getDirectiveOverview } from './tools/get-directive-overview.js';
@@ -337,11 +338,26 @@ function dispatchTool(
         limit: a.limit as number | undefined,
       });
 
-    case 'get_provision':
-      return getProvision(db, {
+    case 'get_provision': {
+      const provResult = getProvision(db, {
         directive_id: a.directive_id as string,
         article: a.article as string | undefined,
       });
+      if (!provResult.error && provResult.directive) {
+        const directiveRef = provResult.directive.short_title ?? provResult.directive.title ?? a.directive_id;
+        const articleNum = provResult.article_number ?? a.article;
+        return {
+          ...provResult,
+          _citation: buildCitation(
+            String(directiveRef),
+            articleNum ? `Article ${articleNum} ${directiveRef}` : String(directiveRef),
+            'get_provision',
+            { directive_id: a.directive_id as string, ...(a.article ? { article: a.article as string } : {}) },
+          ),
+        };
+      }
+      return provResult;
+    }
 
     case 'get_directive_overview':
       return getDirectiveOverview(db, {
