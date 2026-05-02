@@ -1,6 +1,6 @@
 {
   "name": "@ansvar/public-procurement-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Public procurement law, CPV taxonomy, TED award intelligence — 19 MCP tools for EU/CH/AT/DE procurement",
   "private": true,
   "type": "module",
