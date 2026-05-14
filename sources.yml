@@ -1,133 +1,274 @@
-# Data Source Provenance — Public Procurement MCP Server
-# This file documents all data sources, their authority level, and update mechanisms.
+# Public Procurement MCP — Source Provenance (canonical attribution audit feed)
+#
+# This file is the canonical audit-feed location at the repository root,
+# consumed by scripts/audit-source-legitimacy.py in the architecture-docs
+# repo. List-of-dicts shape under top-level `sources:` is required.
+#
+# Redistribution model: verbatim with attribution.
+# data/procurement.db ships procurement-law articles fetched verbatim
+# from EU and national publishers and TED award notices. Every served
+# item carries _citation.source_url, _citation.publisher, and
+# _citation.license matching the per-source declaration below. Article
+# bodies under `provisions.body` are the verbatim upstream text. The
+# fleet manifest `attribution` block names EUR-Lex-Decision-2011-833 as
+# the primary license (the EU procurement directives are the dominant
+# corpus) with German-UrhG-Section-5 and Public-Domain in
+# allowed_licenses for the national-law segments.
+#
+# Last verified: 2026-05-14
 
 sources:
-  - name: EUR-Lex
-    url: https://eur-lex.europa.eu
-    authority: primary
-    description: >
-      Official online access to EU law. Source for EU procurement directives
-      (2014/24/EU, 2014/25/EU, 2014/23/EU) and related regulations.
-    data_types:
-      - directive articles
-      - recitals
-      - definitions
-    ingestion_method: Automated EUR-Lex parser
+  # ============================================================
+  # European Union — Commission Decision 2011/833/EU
+  # ============================================================
+  - id: eu-eurlex
+    name: "EUR-Lex — Official Journal of the European Union"
+    authority: "Publications Office of the European Union"
+    publisher: eur-lex.europa.eu
+    official_url: https://eur-lex.europa.eu/
+    license: EUR-Lex-Decision-2011-833
+    commercial_allowed: true
+    terms_url: https://eur-lex.europa.eu/content/legal-notice/legal-notice.html
+    retrieved_at: '2026-05-14'
+    coverage: >
+      Directive 2014/24/EU (public procurement), Directive 2014/25/EU
+      (utilities), Directive 2014/23/EU (concessions), Directive
+      2009/81/EC (defence), Directive 2007/66/EC (remedies).
     ingestion_scripts:
       - scripts/ingest-legal.ts
-    update_frequency: as-needed
-    license: CC BY 4.0
+      - scripts/lib/eurlex-parser.ts
+    notes: |
+      EUR-Lex legal notice verbatim 2026-05-14: "Unless otherwise
+      specified, you can re-use the legal documents published in EUR-Lex
+      for commercial or non-commercial purposes." Reuse is implemented by
+      Commission Decision of 12 December 2011 on the reuse of Commission
+      documents (Decision 2011/833/EU); editorial content, summaries and
+      consolidated texts are under CC BY 4.0 with attribution and a
+      change indication. Commercial reuse explicitly permitted. Host
+      whitelisted in
+      infrastructure/policy/source-authority-registry.yml (status
+      whitelisted, verified 2026-05-14).
 
-  - name: TED (Tenders Electronic Daily)
-    url: https://ted.europa.eu
-    authority: primary
-    description: >
-      Official EU public procurement journal. Source for contract award notices,
-      contract notices, and prior information notices.
-    data_types:
-      - award notices
-      - contract notices
-      - buyer metadata
-    ingestion_method: TED Open Data API
+  - id: eu-ted
+    name: "TED — Tenders Electronic Daily (Supplement to the OJ EU)"
+    authority: "Publications Office of the European Union"
+    publisher: ted.europa.eu
+    official_url: https://ted.europa.eu/
+    license: EUR-Lex-Decision-2011-833
+    commercial_allowed: true
+    terms_url: https://ted.europa.eu/en/legal-notice
+    retrieved_at: '2026-05-14'
+    coverage: >
+      Contract award notices, contract notices, prior information notices,
+      and buyer metadata from the EU public-procurement journal.
     ingestion_scripts:
       - scripts/ingest-ted-notices.ts
-    update_frequency: weekly
-    license: Open Data (EU Open Data Portal)
+    notes: |
+      TED / SIMAP legal notice verbatim 2026-05-14: "procurement notices
+      published in the Supplement to the Official Journal of the European
+      Union can be freely reused, for commercial or non-commercial
+      purposes". Authorisation derives from Commission Decision of 12
+      December 2011 on the reuse of Commission documents (2011/833/EU);
+      commercial reuse explicitly permitted. Editorial content
+      additionally CC BY 4.0; system metadata under CC0 1.0. The
+      award-notice corpus is verbatim re-use under the same Decision.
 
-  - name: SIMAP / CPV
-    url: https://simap.ted.europa.eu/cpv
-    authority: primary
-    description: >
-      Common Procurement Vocabulary (CPV) classification system.
-      Official EU taxonomy for procurement categories.
-    data_types:
-      - cpv_codes
-    ingestion_method: Static CSV/XML import
+  - id: eu-simap-cpv
+    name: "SIMAP — Common Procurement Vocabulary (CPV)"
+    authority: "Publications Office of the European Union"
+    publisher: simap.ted.europa.eu
+    official_url: https://ted.europa.eu/simap/codes-and-nomenclatures/cpv
+    license: EUR-Lex-Decision-2011-833
+    commercial_allowed: true
+    terms_url: https://ted.europa.eu/en/legal-notice
+    retrieved_at: '2026-05-14'
+    coverage: >
+      Complete CPV taxonomy (~9,454 codes) used to classify procurement
+      categories. Adopted by Regulation (EC) No 213/2008.
     ingestion_scripts:
       - scripts/ingest-reference.ts
-    update_frequency: as-needed (CPV rarely changes)
-    license: Public domain
+    notes: |
+      The Common Procurement Vocabulary is adopted by Regulation (EC)
+      No 213/2008 and published by the Publications Office of the
+      European Union through SIMAP / TED. Same legal notice applies:
+      "procurement notices published in the Supplement to the Official
+      Journal of the European Union can be freely reused, for commercial
+      or non-commercial purposes"; commercial reuse explicitly permitted.
+      System metadata is additionally dedicated to the public domain
+      under CC0 1.0 per the TED legal notice (Creative Commons Universal
+      Public Domain Dedication).
 
-  - name: Eurostat NUTS
-    url: https://ec.europa.eu/eurostat/web/nuts
-    authority: primary
-    description: >
-      Nomenclature of Territorial Units for Statistics (NUTS).
-      Used for geographic classification of procurement notices.
-    data_types:
-      - nuts_regions
-    ingestion_method: Static CSV import
+  - id: eu-eurostat-nuts
+    name: "Eurostat NUTS — Nomenclature of Territorial Units for Statistics"
+    authority: "European Commission, Eurostat"
+    publisher: ec.europa.eu
+    official_url: https://ec.europa.eu/eurostat/web/nuts
+    license: EUR-Lex-Decision-2011-833
+    commercial_allowed: true
+    terms_url: https://ec.europa.eu/eurostat/about-us/policies/copyright
+    retrieved_at: '2026-05-14'
+    coverage: >
+      NUTS regions (~1,500) used for geographic classification of
+      procurement notices. Established by Regulation (EC) No 1059/2003.
     ingestion_scripts:
       - scripts/ingest-reference.ts
-    update_frequency: as-needed
+    notes: |
+      Eurostat copyright notice verbatim 2026-05-14: "Reuse of
+      statistical data, metadata, publications, and other dissemination
+      tools published on this website for commercial or non-commercial
+      purposes is authorised provided the source is acknowledged."
+      Reuse policy implements Commission Decision of 12 December 2011
+      (Decision 2011/833/EU); commercial reuse explicitly permitted.
+      Editorial content additionally under CC BY 4.0. NUTS reference
+      data is in-scope; certain country-trade data restrictions cited
+      in the notice do not apply to NUTS region codes.
 
-  - name: RIS (Austrian Legal Information System)
-    url: https://www.ris.bka.gv.at
-    authority: primary
-    description: >
-      Official Austrian federal law portal. Source for the
-      Bundesvergabegesetz (BVergG) and related procurement regulations.
-    data_types:
-      - national law provisions
-    ingestion_method: Automated parser
+  # ============================================================
+  # Austria — UrhG §7 (laws and official notices unprotected)
+  # ============================================================
+  - id: at-ris
+    name: "RIS — Rechtsinformationssystem des Bundes (Austrian federal law portal)"
+    authority: "Bundeskanzleramt der Republik Österreich"
+    publisher: ris.bka.gv.at
+    official_url: https://www.ris.bka.gv.at/
+    license: Public-Domain
+    commercial_allowed: true
+    terms_url: https://www.ris.bka.gv.at/UI/Impressum.aspx
+    retrieved_at: '2026-05-14'
+    coverage: >
+      Bundesvergabegesetz 2018 (BVergG 2018) and
+      Bundesvergabegesetz Konzessionen 2018 (BVergGKonz 2018) —
+      Austrian procurement statutes.
     ingestion_scripts:
+      - scripts/ingest-austrian.ts
       - scripts/ingest-legal.ts
-    update_frequency: as-needed
-    license: Public domain
+    notes: |
+      Austrian Urheberrechtsgesetz §7(1) verbatim: "Gesetze,
+      Verordnungen, amtliche Erlässe, Bekanntmachungen und
+      Entscheidungen sowie ausschließlich oder vorwiegend zum amtlichen
+      Gebrauch hergestellte amtliche Werke der im § 2 Z 1 oder 3
+      bezeichneten Art genießen keinen urheberrechtlichen Schutz."
+      (Laws, ordinances, official decrees, announcements and decisions,
+      and official works produced exclusively or predominantly for
+      official use, do not enjoy copyright protection.) Statutory
+      public-domain regime under Austrian law. The catalog code
+      `Public-Domain` is the regime entry that covers this jurisdiction;
+      see infrastructure/attribution-licenses.json. Registry note: the
+      ris.bka.gv.at entry in source-authority-registry.yml is currently
+      under_review; this task does not modify that registry but cites
+      the statutory basis above.
 
-  - name: Gesetze im Internet
-    url: https://www.gesetze-im-internet.de
-    authority: primary
-    description: >
-      Official German federal law portal. Source for the Gesetz gegen
-      Wettbewerbsbeschrankungen (GWB) Part 4 and Vergabeverordnung (VgV).
-    data_types:
-      - national law provisions
-    ingestion_method: Automated parser
+  # ============================================================
+  # Germany — UrhG §5 (statutes uncopyrightable)
+  # ============================================================
+  - id: de-gesetze-im-internet
+    name: "Gesetze im Internet — German Federal Ministry of Justice law portal"
+    authority: "Bundesministerium der Justiz / Bundesamt für Justiz"
+    publisher: gesetze-im-internet.de
+    official_url: https://www.gesetze-im-internet.de/
+    license: German-UrhG-Section-5
+    commercial_allowed: true
+    terms_url: https://www.gesetze-im-internet.de/urhg/__5.html
+    retrieved_at: '2026-05-14'
+    coverage: >
+      GWB Part 4 (Vergaberecht), Vergabeverordnung (VgV),
+      Sektorenverordnung (SektVO), Konzessionsvergabeverordnung
+      (KonzVgV), Vergabeverordnung Verteidigung und Sicherheit (VSVgV).
+      The German originals are ingested; the separate /Teilliste_
+      translations.html page (translations restricted to private,
+      non-commercial use) is not consumed.
     ingestion_scripts:
+      - scripts/ingest-german.ts
       - scripts/ingest-legal.ts
-    update_frequency: as-needed
-    license: Public domain
+    notes: |
+      Gesetze-im-Internet homepage verbatim 2026-05-14: "Die
+      Rechtsnormen in deutscher Sprache stehen in allen angebotenen
+      Formaten zur freien Nutzung und Weiterverwendung zur Verfügung."
+      (Legal norms in German are available in all offered formats for
+      free use and reuse.) Commercial reuse permitted as a consequence
+      of the §5 UrhG public-works carve-out. Statutory basis: German
+      Urheberrechtsgesetz §5 (Amtliche Werke) — laws, ordinances and
+      official decrees do not enjoy copyright protection. The catalog
+      code `German-UrhG-Section-5` is the regime entry for this
+      jurisdiction. Registry note: the gesetze-im-internet.de entry in
+      source-authority-registry.yml is currently under_review (last
+      verified 2026-05-04); this task does not modify that registry
+      but cites the statutory basis above. The English translations
+      on the separate /Teilliste_translations.html page are scoped out
+      of ingestion (they carry a different, restricted reuse notice).
 
-  - name: Fedlex
-    url: https://www.fedlex.admin.ch
-    authority: primary
-    description: >
-      Official Swiss federal law portal. Source for the Bundesgesetz uber
-      das offentliche Beschaffungswesen (BoeB).
-    data_types:
-      - national law provisions
-    ingestion_method: Automated parser
+  # ============================================================
+  # Switzerland — URG Art. 5 (statutes uncopyrightable)
+  # ============================================================
+  - id: ch-fedlex
+    name: "Fedlex — Swiss federal law portal"
+    authority: "Bundeskanzlei (Swiss Federal Chancellery)"
+    publisher: fedlex.admin.ch
+    official_url: https://www.fedlex.admin.ch/
+    license: Public-Domain
+    commercial_allowed: true
+    terms_url: https://www.fedlex.admin.ch/eli/cc/1993/1798_1798_1798/de
+    retrieved_at: '2026-05-14'
+    coverage: >
+      Bundesgesetz über das öffentliche Beschaffungswesen (BöB,
+      SR 172.056.1) and Verordnung über das öffentliche
+      Beschaffungswesen (VöB, SR 172.056.11) — Swiss federal
+      procurement statute and ordinance.
     ingestion_scripts:
+      - scripts/ingest-swiss.ts
       - scripts/ingest-legal.ts
-    update_frequency: as-needed
-    license: Public domain
+    notes: |
+      Statutory basis: Swiss Urheberrechtsgesetz (URG, SR 231.1)
+      Art. 5(1)(a)-(c): "Durch das Urheberrecht nicht geschützt sind:
+      a. Gesetze, Verordnungen, völkerrechtliche Verträge und andere
+      amtliche Erlasse; b. Zahlungsmittel; c. Entscheidungen,
+      Protokolle und Berichte von Behörden und öffentlichen
+      Verwaltungen." (Laws, ordinances, treaties, official decrees,
+      decisions, protocols and reports of authorities and public
+      administrations are not protected by copyright.) The catalog
+      code `Public-Domain` is the regime entry that covers this
+      jurisdiction. Registry note: the fedlex.admin.ch entry in
+      source-authority-registry.yml is currently under_review (last
+      verified 2026-05-04); this task does not modify that registry
+      but cites the statutory basis above. Fedlex serves the URG text
+      itself at the URN above; the page is JS-only and the verbatim
+      Article 5 text quoted here is taken from the Swiss federal
+      consolidated compilation.
 
 derived_data:
   - name: Buyer Profiles
     description: >
       Aggregated profiles of contracting authorities computed from TED
       award notices. Includes total awards, average values, preferred
-      procedures, and top CPV codes.
+      procedures, and top CPV codes. Derived from eu-ted source data.
     source_tables: notices -> buyer_profiles
     authority: derived (computed from primary data)
+    license: EUR-Lex-Decision-2011-833
+    notes: |
+      Aggregations and statistics over the TED award-notice corpus.
+      Underlying notices are CC BY 4.0 / Decision 2011/833/EU re-use;
+      derived aggregates inherit the same re-use posture.
 
   - name: CPV Benchmarks
     description: >
       Price benchmarking data computed from TED award notices. Includes
       percentile values, average bidders, and top winners by CPV code
-      and country.
+      and country. Derived from eu-ted source data.
     source_tables: notices -> cpv_benchmarks
     authority: derived (computed from primary data)
+    license: EUR-Lex-Decision-2011-833
+    notes: |
+      Statistical aggregations only (price percentiles, bidder counts);
+      not a substantial reproduction of any single underlying notice.
 
 notes:
   - >
-    All legal text is from official public sources. This dataset should be
-    verified against official publications for legal purposes.
+    All legal text is from official public sources. This dataset should
+    be verified against official publications for legal purposes.
   - >
-    TED award data is historical and sourced from the EU Open Data Portal.
-    Award values and bidder counts may have data quality limitations in
-    older notices.
+    TED award data is historical and sourced from the EU Open Data
+    Portal. Award values and bidder counts may have data quality
+    limitations in older notices.
   - >
-    Derived data (buyer profiles, benchmarks) is computed from primary data
-    and should be treated as indicative, not authoritative.
+    Derived data (buyer profiles, benchmarks) is computed from primary
+    data and should be treated as indicative, not authoritative.
