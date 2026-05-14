@@ -163,17 +163,22 @@ Returns contracts in the IT sector across Germany that are estimated to come up 
 
 ## Data Sources
 
-| Source | Authority | Coverage | License |
-|--------|-----------|----------|---------|
-| [EUR-Lex](https://eur-lex.europa.eu) | Official Journal of the EU | EU procurement directives | CC BY 4.0 |
-| [TED](https://ted.europa.eu) | EU Publications Office | Award notices across EU/EEA | Open Data |
-| [SIMAP/CPV](https://simap.ted.europa.eu/cpv) | EU Publications Office | CPV taxonomy | Public domain |
-| [Eurostat NUTS](https://ec.europa.eu/eurostat/web/nuts) | Eurostat | Geographic regions | Public domain |
-| [RIS](https://www.ris.bka.gv.at) | Austrian Federal Chancellery | BVergG, BVergGKonz | Public domain |
-| [Gesetze im Internet](https://www.gesetze-im-internet.de) | German Federal Ministry of Justice | GWB, VgV, SektVO, KonzVgV, VSVgV | Public domain |
-| [Fedlex](https://www.fedlex.admin.ch) | Swiss Federal Chancellery | BoeB, VoeB | Public domain |
+Per-source licence codes match `infrastructure/attribution-licenses.json`
+in the architecture-docs repo. The dominant corpus is the EU procurement
+directives served from EUR-Lex under Commission Decision 2011/833/EU.
 
-See `sources.yml` for full provenance details.
+| Source | Authority | Coverage | Licence code |
+|--------|-----------|----------|--------------|
+| [EUR-Lex](https://eur-lex.europa.eu) | Publications Office of the EU | EU procurement directives | `EUR-Lex-Decision-2011-833` |
+| [TED](https://ted.europa.eu) | Publications Office of the EU | Award notices (EU/EEA) | `EUR-Lex-Decision-2011-833` |
+| [SIMAP/CPV](https://ted.europa.eu/simap/codes-and-nomenclatures/cpv) | Publications Office of the EU | CPV taxonomy | `EUR-Lex-Decision-2011-833` |
+| [Eurostat NUTS](https://ec.europa.eu/eurostat/web/nuts) | Eurostat | NUTS regions | `EUR-Lex-Decision-2011-833` |
+| [RIS](https://www.ris.bka.gv.at) | Austrian Federal Chancellery | BVergG, BVergGKonz | `Public-Domain` (statutory basis: Austrian UrhG §7) |
+| [Gesetze im Internet](https://www.gesetze-im-internet.de) | German Federal Ministry of Justice | GWB Part 4, VgV, SektVO, KonzVgV, VSVgV | `German-UrhG-Section-5` |
+| [Fedlex](https://www.fedlex.admin.ch) | Swiss Federal Chancellery | BöB, VöB | `Public-Domain` (statutory basis: Swiss URG Art. 5) |
+
+See `sources.yml` for full provenance details including verbatim ToS
+quotes, statutory basis citations, and ingestion-script references.
 
 ---
 
