@@ -44,7 +44,8 @@ sources:
       Commission Decision of 12 December 2011 on the reuse of Commission
       documents (Decision 2011/833/EU); editorial content, summaries and
       consolidated texts are under CC BY 4.0 with attribution and a
-      change indication. Host whitelisted in
+      change indication. Commercial reuse explicitly permitted. Host
+      whitelisted in
       infrastructure/policy/source-authority-registry.yml (status
       whitelisted, verified 2026-05-14).
 
@@ -67,10 +68,10 @@ sources:
       published in the Supplement to the Official Journal of the European
       Union can be freely reused, for commercial or non-commercial
       purposes". Authorisation derives from Commission Decision of 12
-      December 2011 on the reuse of Commission documents (2011/833/EU).
-      Editorial content additionally CC BY 4.0; system metadata under
-      CC0 1.0. The award-notice corpus is verbatim re-use under the same
-      Decision.
+      December 2011 on the reuse of Commission documents (2011/833/EU);
+      commercial reuse explicitly permitted. Editorial content
+      additionally CC BY 4.0; system metadata under CC0 1.0. The
+      award-notice corpus is verbatim re-use under the same Decision.
 
   - id: eu-simap-cpv
     name: "SIMAP — Common Procurement Vocabulary (CPV)"
@@ -92,9 +93,10 @@ sources:
       European Union through SIMAP / TED. Same legal notice applies:
       "procurement notices published in the Supplement to the Official
       Journal of the European Union can be freely reused, for commercial
-      or non-commercial purposes". System metadata is additionally
-      dedicated to the public domain under CC0 1.0 per the TED legal
-      notice (Creative Commons Universal Public Domain Dedication).
+      or non-commercial purposes"; commercial reuse explicitly permitted.
+      System metadata is additionally dedicated to the public domain
+      under CC0 1.0 per the TED legal notice (Creative Commons Universal
+      Public Domain Dedication).
 
   - id: eu-eurostat-nuts
     name: "Eurostat NUTS — Nomenclature of Territorial Units for Statistics"
@@ -116,9 +118,10 @@ sources:
       tools published on this website for commercial or non-commercial
       purposes is authorised provided the source is acknowledged."
       Reuse policy implements Commission Decision of 12 December 2011
-      (Decision 2011/833/EU). Editorial content additionally under CC BY
-      4.0. NUTS reference data is in-scope; certain country-trade data
-      restrictions cited in the notice do not apply to NUTS region codes.
+      (Decision 2011/833/EU); commercial reuse explicitly permitted.
+      Editorial content additionally under CC BY 4.0. NUTS reference
+      data is in-scope; certain country-trade data restrictions cited
+      in the notice do not apply to NUTS region codes.
 
   # ============================================================
   # Austria — UrhG §7 (laws and official notices unprotected)
@@ -182,16 +185,17 @@ sources:
       Rechtsnormen in deutscher Sprache stehen in allen angebotenen
       Formaten zur freien Nutzung und Weiterverwendung zur Verfügung."
       (Legal norms in German are available in all offered formats for
-      free use and reuse.) Statutory basis: German Urheberrechtsgesetz
-      §5 (Amtliche Werke) — laws, ordinances and official decrees do
-      not enjoy copyright protection. The catalog code
-      `German-UrhG-Section-5` is the regime entry for this jurisdiction.
-      Registry note: the gesetze-im-internet.de entry in
+      free use and reuse.) Commercial reuse permitted as a consequence
+      of the §5 UrhG public-works carve-out. Statutory basis: German
+      Urheberrechtsgesetz §5 (Amtliche Werke) — laws, ordinances and
+      official decrees do not enjoy copyright protection. The catalog
+      code `German-UrhG-Section-5` is the regime entry for this
+      jurisdiction. Registry note: the gesetze-im-internet.de entry in
       source-authority-registry.yml is currently under_review (last
-      verified 2026-05-04); this task does not modify that registry but
-      cites the statutory basis above. Translations on
-      /Teilliste_translations.html are out of scope (restricted to
-      private, non-commercial use per the site's translation notice).
+      verified 2026-05-04); this task does not modify that registry
+      but cites the statutory basis above. The English translations
+      on the separate /Teilliste_translations.html page are scoped out
+      of ingestion (they carry a different, restricted reuse notice).
 
   # ============================================================
   # Switzerland — URG Art. 5 (statutes uncopyrightable)
